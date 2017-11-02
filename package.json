@@ -7,6 +7,9 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
+  "bin": {
+    "ciri-term": "index.js"
+  },
   "license": "ISC",
   "dependencies": {
     "blessed": "https://github.com/aman-tiwari/blessed",
