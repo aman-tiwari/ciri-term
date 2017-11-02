@@ -66,7 +66,12 @@ ipc.serve(function() {
 
     ws.onopen = () => { opened = true };
 
-    let forward = (msg) => { ipc.server.on(msg, () => ws.send(msg)) };
+    let forward = (msg) => {
+      ipc.server.on(msg, (data, sock) => {
+        ws.send(msg);
+        ipc.server.emit(sock, 'ack');
+      });
+    };
 
     forward('flashlight');
     forward('fists');

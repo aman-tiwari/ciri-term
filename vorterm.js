@@ -49,6 +49,8 @@ ipc.connectTo('dash', function() {
 
     vorpal.command('spell', 'Equip the spell')
 
+    ipc.of.dash.on('ack', () => {});
+
     // informational commands that are always there
     vorpal.command('flashlight', '🔦 Turns on flashlight')
         .action(function(args, callback) {
