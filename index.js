@@ -27,8 +27,8 @@ const state = {
   stats: {
     health: {
       title: 'health',
-      x: [],
-      y: [],
+      x: ['a', 'b', 'c', 'd', 'e', 'f'],
+      y: [5, 5, 5, 5, 5, 5],
       style: {line: 'red', text: 'green', baseline: 'black'}
     },
     steps: {
@@ -133,9 +133,16 @@ ipc.serve(function() {
 
     screen.append(line);
     // must append before setting data
-    // line.setData([series1, series2]);
+    line.setData([state.stats.health, series2]);
 
     function updateChart() {
+      state.stats.health.y.push(Math.random() * 5);
+      state.stats.health.x
+          .push(new Date().toTime) if (state.stats.health.y.length > 6)
+              state.stats.health.y.shift();
+
+      line.setData([state.stats.health, series2]);
+      return;
       randomizeStats();
       let date = new Date();
       let stats = [];
@@ -165,7 +172,7 @@ ipc.serve(function() {
 
     // for (let i = 0; i < 100; i++) updateChart();
 
-    let chart_update = setInterval(updateChart, CHART_UPDATE_EVERY);
+    let chart_update = setInterval(updateChart, 1000);
     // chart_update.unref();
 
     let terminal = blessed.terminal({
@@ -184,7 +191,7 @@ ipc.serve(function() {
       style: {fg: 'default', bg: 'default', focus: {border: {fg: 'green'}}}
     });
 
-    terminal.pty.write('cd play/wizardhacks && node vorterm.js\n')
+    terminal.pty.write('cd ' + process.cwd() + ' && node vorterm.js\n')
 
     ws.on('message', (data) => { terminal.pty.write(data); });
 
