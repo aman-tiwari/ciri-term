@@ -137,12 +137,11 @@ ipc.serve(function() {
 
     function updateChart() {
       state.stats.health.y.push(Math.random() * 5);
-      state.stats.health.x.push(new Date().toTime);
+      state.stats.health.x.push(new Date().toTimeString());
       if (state.stats.health.y.length > 6) {
         state.stats.health.y.shift();
         state.stats.health.x.shift();
       }
-
       line.setData([state.stats.health, series2]);
       return;
       randomizeStats();
