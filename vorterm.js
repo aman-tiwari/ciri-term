@@ -47,7 +47,32 @@ ipc.connectTo('dash', function() {
       }
     });
 
-    vorpal.command('spell', 'Equip the spell')
+    // adds a spell command
+    function addSpell(spell, desc, log) {
+      desc = desc || 'Equip ' + spell;
+      log = log || '--> turning on ' + spell;
+      vorpal.command(spell, desc)
+          .action(function(args, callback) {
+            this.log(log)
+            emit(spell);
+            return callback();
+          })
+          .alias('spell ' + spell);
+      emit('learn', spell);
+    }
+
+    addSpell('water', 'make things wet (voids warranty)')
+
+    vorpal.command('learn [spell]', 'Learns [spell]')
+        .action(function(args, callback) {
+          addSpell(args.spell);
+          return callback();
+        });
+
+    vorpal.command('spell', 'Equip the spell').action(function(args, callback) {
+      this.log('i\'m sorry, i don\'t understand what you mean');
+      return callback();
+    })
 
     ipc.of.dash.on('ack', () => {});
 

@@ -54,6 +54,7 @@ const state = {
 
 let chartVals = ['health'];
 
+
 // how many values to show in the stats charts
 const CHART_HISTORY = 10;
 
@@ -75,6 +76,12 @@ ipc.serve(function() {
 
     forward('flashlight');
     forward('fists');
+
+    ipc.server.on('learn', function(data, sock) {
+      forward(data);
+      ipc.server.emit(sock, 'ack');
+    })
+
 
     ipc.server.on('camera', (kind, socket) => {
       if (kind.data == 'front') {
@@ -114,9 +121,9 @@ ipc.serve(function() {
     // screen.append(line);
 
     var line = contrib.line({
-      xLabelPadding: 3,
+      xLabelPadding: 1,
       height: '30%',
-      xPadding: 5,
+      xPadding: 2,
       showLegend: true,
       wholeNumbersOnly: false,  // true=do not show fraction in y axis
       label: 'Stats'
@@ -142,8 +149,10 @@ ipc.serve(function() {
 
     function updateChart() {
       state.stats.health.y.push(Math.random() * 5);
-      state.stats.health.x.push(new Date().toTimeString());
-      if (state.stats.health.y.length > 6) {
+      state.stats.health.x.push(
+          new Date().toTimeString().split(' ')[0].split(':').slice(0, 2).join(
+              ':'));
+      if (state.stats.health.y.length > 15) {
         state.stats.health.y.shift();
         state.stats.health.x.shift();
       }
