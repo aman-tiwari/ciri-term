@@ -28,10 +28,10 @@ const state = {
     health: {
       title: 'health',
       x: ['a', 'b', 'c', 'd', 'e', 'f'],
-      y: [5, 5, 5, 5, 5, 5],
+      y: [100, 100, 100, 100, 100, 100],
       style: {line: 'red', text: 'green', baseline: 'black'}
     },
-    steps: {
+    velocity: {
       title: 'steps',
       x: [],
       y: [],
@@ -59,7 +59,7 @@ let chartVals = ['health'];
 const CHART_HISTORY = 10;
 
 // update the chart every
-const CHART_UPDATE_EVERY = 2000;
+const CHART_UPDATE_EVERY = 1000;
 
 ipc.serve(function() {
 
@@ -145,19 +145,25 @@ ipc.serve(function() {
 
     screen.append(line);
     // must append before setting data
-    line.setData([state.stats.health, series2]);
+    line.setData([state.stats.health, state.stats.wifi, state.stats.battery]);
 
     function updateChart() {
-      state.stats.health.y.push(Math.random() * 5);
-      state.stats.health.x.push(
-          new Date().toTimeString().split(' ')[0].split(':').slice(0, 2).join(
-              ':'));
-      if (state.stats.health.y.length > 15) {
+      state.stats.health.y.push(state.health);
+      state.stats.health.x.push(new Date().toTimeString().split(' ')[0]);
+      state.stats.wifi.y.push(state.health);
+      state.stats.wifi.x.push(new Date().toTimeString().split(' ')[0]);
+      state.stats.battery.y.push(state.health);
+      state.stats.battery.x.push(new Date().toTimeString().split(' ')[0]);
+      if (state.stats.health.y.length > 50) {
         state.stats.health.y.shift();
         state.stats.health.x.shift();
+        state.stats.wifi.y.shift();
+        state.stats.wifi.x.shift();
+        state.stats.battery.y.shift();
+        state.stats.battery.x.shift();
       }
-      line.setData([state.stats.health, series2]);
-      return;
+      line.setData([state.stats.health, state.stats.wifi, state.stats.battery]);
+      return; /*
       randomizeStats();
       let date = new Date();
       let stats = [];
@@ -174,7 +180,7 @@ ipc.serve(function() {
         stats.push(stat);
       }
       line.setData(stats);
-      screen.render();
+      screen.render(); */
     }
 
     function randomizeStats() {
@@ -208,7 +214,16 @@ ipc.serve(function() {
 
     terminal.pty.write('cd ' + process.cwd() + ' && node vorterm.js\n')
 
-    ws.on('message', (data) => { terminal.pty.write(data); });
+    ws.on('message', (data) => {
+      // typing
+      if (data.length == 1) terminal.pty.write(data);
+      let [prefix, amt] = data.split(':');
+      if (prefix && amt !== undefined) {
+        if (state[prefix]) {
+          state[prefix] = parseFloat(amt);
+        }
+      }
+    });
 
     ws.on('close', (code, reason) => {
       terminal.write(
