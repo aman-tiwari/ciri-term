@@ -63,6 +63,14 @@ ipc.connectTo('dash', function() {
 
     addSpell('water', 'make things wet (voids warranty)')
 
+    addSpell('fireball', 'fire emoji fire emoji fire emoji')
+
+    addSpell('air', 'blow them away with this powerful spell')
+
+    addSpell('revenge', 'does nothing')
+
+    addSpell('jump', 'boing')
+
     vorpal.command('learn [spell]', 'Learns [spell]')
         .action(function(args, callback) {
           addSpell(args.spell);
@@ -86,15 +94,16 @@ ipc.connectTo('dash', function() {
 
     vorpal.command('inventory', 'Opens app drawer')
         .action(function(args, callback) {
-          duckCount++;
           this.log('^ opening inventory');
           state.inventory.opened = true;
-          emit('inventory');
+          // emit('inventory');
           callback();
         });
 
 
-    vorpal.command('fists', '👊')
+    vorpal.command('fists', '👊').action(function(args, callback) {
+      this.log('punchy time');
+    })
 
     vorpal.command('spells', '✅ Lists spells in my memory')
         .action(function(args, callback) {

@@ -22,26 +22,26 @@ const state = {
   inventory: {opened: false, items: []},
   health: 100,
   steps: 50,
-  battery: 10,
+  battery: 100,
   wifi: 100,
   stats: {
     health: {
       title: 'health',
-      x: ['a', 'b', 'c', 'd', 'e', 'f'],
-      y: [100, 100, 100, 100, 100, 100],
-      style: {line: 'red', text: 'green', baseline: 'black'}
+      x: [],
+      y: [],
+      style: {line: 'red', text: 'red', baseline: 'black'}
     },
     velocity: {
       title: 'steps',
       x: [],
       y: [],
-      style: {line: 'orange', text: 'green', baseline: 'black'}
+      style: {line: 'orange', text: 'orange', baseline: 'black'}
     },
     wifi: {
       title: 'wi-fi',
       x: [],
       y: [],
-      style: {line: 'lightblue', text: 'green', baseline: 'black'}
+      style: {line: 'blue', text: 'blue', baseline: 'black'}
     },
     battery: {
       title: 'battery',
@@ -59,12 +59,13 @@ let chartVals = ['health'];
 const CHART_HISTORY = 10;
 
 // update the chart every
-const CHART_UPDATE_EVERY = 1000;
+const CHART_UPDATE_EVERY = 500;
 
-ipc.serve(function() {
 
-  wss.on('connection', (ws) => {
 
+wss.on('connection', (ws) => {
+
+  ipc.serve(function() {
     ws.onopen = () => { opened = true };
 
     let forward = (msg) => {
@@ -148,13 +149,14 @@ ipc.serve(function() {
     line.setData([state.stats.health, state.stats.wifi, state.stats.battery]);
 
     function updateChart() {
+      let t = new Date().toTimeString().split(' ')[0];
       state.stats.health.y.push(state.health);
-      state.stats.health.x.push(new Date().toTimeString().split(' ')[0]);
-      state.stats.wifi.y.push(state.health);
-      state.stats.wifi.x.push(new Date().toTimeString().split(' ')[0]);
-      state.stats.battery.y.push(state.health);
-      state.stats.battery.x.push(new Date().toTimeString().split(' ')[0]);
-      if (state.stats.health.y.length > 50) {
+      state.stats.health.x.push(t);
+      state.stats.wifi.y.push(state.wifi);
+      state.stats.wifi.x.push(t);
+      state.stats.battery.y.push(state.battery);
+      state.stats.battery.x.push(t);
+      if (state.stats.health.y.length > 100) {
         state.stats.health.y.shift();
         state.stats.health.x.shift();
         state.stats.wifi.y.shift();
@@ -196,32 +198,65 @@ ipc.serve(function() {
     let chart_update = setInterval(updateChart, 1000);
     // chart_update.unref();
 
-    let terminal = blessed.terminal({
-      parent: screen,
-      cursor: 'line',
-      cursorBlink: true,
-      screenKeys: false,
-      label: ' hacker terminal ',
-      left: 0,
-      top: '30%',
-      shell: '/bin/bash',
-      env: process.env,
-      width: '100%',
-      height: '70%',
-      border: 'line',
-      style: {fg: 'default', bg: 'default', focus: {border: {fg: 'green'}}}
-    });
+    function make_terminal() {
+      let term = blessed.terminal({
+        parent: screen,
+        cursor: 'line',
+        cursorBlink: true,
+        screenKeys: false,
+        label: ' hacker terminal ',
+        left: 0,
+        top: '30%',
+        shell: '/bin/bash',
+        env: process.env,
+        width: '100%',
+        height: '70%',
+        border: 'line',
+        style: {fg: 'default', bg: 'default', focus: {border: {fg: 'green'}}}
+      });
 
-    terminal.pty.write('cd ' + process.cwd() + ' && node vorterm.js\n')
+      return term;
+    }
+
+    function battery_dead() {
+      return blessed.box({
+        top: 'center',
+        left: 'center',
+        width: '50%',
+        height: '50%',
+        content:
+            '{red-fg}  {bold}BATTERY DEAD PLEASE CHARGE ME{/bold} {/red-fg}',
+        border: {type: 'line'},
+        style: {fg: 'white', bg: 'red', border: {fg: 'red'}}
+      })
+    }
+
+    let terminal = make_terminal();
+
+    terminal.pty.write('cd ' + process.cwd() + ' && node vorterm.js\n');
+
+
+    let batteryNotice = battery_dead();
+    let terminalClosed = false;
 
     ws.on('message', (data) => {
       // typing
       if (data.length == 1) terminal.pty.write(data);
       let [prefix, amt] = data.split(':');
+      // console.log(prefix, amt);
+
       if (prefix && amt !== undefined) {
-        if (state[prefix]) {
-          state[prefix] = parseFloat(amt);
-        }
+        prefix = prefix.trim();
+        state[prefix] = parseFloat(amt);
+        /*if (state.battery < 1) {
+          terminalClosed = true;
+          terminal.destroy();
+          screen.append(batteryNotice);
+        } else if (terminalClosed && state.battery > 1) {
+          terminal = make_terminal();
+          terminalClosed = false;
+          batteryNotice.detach();
+        }*/
       }
     });
 
@@ -244,8 +279,8 @@ ipc.serve(function() {
       opened = false;
       terminal.kill();
       screen.destroy();
+      ipc.server.stop();
     };
   });
+  ipc.server.start();
 });
-
-ipc.server.start();
