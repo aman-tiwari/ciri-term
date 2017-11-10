@@ -69,6 +69,8 @@ ipc.connectTo('dash', function() {
 
     addSpell('revenge', 'does nothing')
 
+    addSpell('lightning', 'blow them away with this powerful spell')
+
     addSpell('jump', 'boing')
 
     vorpal.command('learn [spell]', 'Learns [spell]')
