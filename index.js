@@ -67,11 +67,19 @@ wss.on('connection', (ws) => {
 
   ipc.serve(function() {
     ws.onopen = () => { opened = true };
-
+    let terminal;
     let forward = (msg) => {
       ipc.server.on(msg, (data, sock) => {
-        ws.send(msg);
-        ipc.server.emit(sock, 'ack');
+        console.log(state.wifi);
+        if (state.wifi >= 10 * Math.random()) {
+          ws.send(msg);
+          ipc.server.emit(sock, 'ack');
+        } else {
+          if (terminal != undefined) {
+            terminal.write(
+                '!!!! ---- ERROR WIFI DISCONNECTED ---- !!!!\n!!!! ----    COMMAND NOT SENT     ---- !!!!\n')
+          }
+        }
       });
     };
 
@@ -231,7 +239,7 @@ wss.on('connection', (ws) => {
       })
     }
 
-    let terminal = make_terminal();
+    terminal = make_terminal();
 
     terminal.pty.write('cd ' + process.cwd() + ' && node vorterm.js\n');
 
