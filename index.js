@@ -24,6 +24,7 @@ const state = {
   steps: 50,
   battery: 100,
   wifi: 100,
+  discovered_enemies: [],
   stats: {
     health: {
       title: 'health',
@@ -61,6 +62,8 @@ const CHART_HISTORY = 10;
 // update the chart every
 const CHART_UPDATE_EVERY = 500;
 
+const DATA_SENDING_FAIL_PROBABILITY = 0.4;
+const SPELL_WAIT = 3 * 1000;
 
 
 wss.on('connection', (ws) => {
@@ -70,16 +73,21 @@ wss.on('connection', (ws) => {
     let terminal;
     let forward = (msg) => {
       ipc.server.on(msg, (data, sock) => {
-        console.log(state.wifi);
-        if (state.wifi >= 10 * Math.random()) {
-          ws.send(msg);
-          ipc.server.emit(sock, 'ack');
-        } else {
-          if (terminal != undefined) {
-            terminal.write(
-                '!!!! ---- ERROR WIFI DISCONNECTED ---- !!!!\n!!!! ----    COMMAND NOT SENT     ---- !!!!\n')
-          }
-        }
+        // if (state.wifi >= 10 * Math.random()) {
+        ws.send(msg);
+        ipc.server.emit(sock, 'ack');
+        //    ipc.server.emit(sock, 'wifi');
+        //  } else {
+        //   if (terminal != undefined) {
+        //    ipc.server.emit(sock, 'no wifi', msg);
+        //   if (Math.random() > DATA_SENDING_FAIL_PROBABILITY) {
+        //    setTimeout(() => ws.send(msg), SPELL_WAIT);
+        //   ipc.server.emit(sock, 'ack');
+        //} else {
+        // ipc.server.emit(sock, 'sending failed');
+        // }
+        //  }
+        //}
       });
     };
 
@@ -90,6 +98,7 @@ wss.on('connection', (ws) => {
       forward(data);
       ipc.server.emit(sock, 'ack');
     })
+
 
 
     ipc.server.on('camera', (kind, socket) => {
@@ -115,7 +124,7 @@ wss.on('connection', (ws) => {
       fullUnicode: true,
       dockBorders: true,
       ignoreDockContrast: true,
-      title: 'ciri interface'
+      title: 'cir interface'
     });
 
     /* let line = contrib.line({
@@ -173,24 +182,8 @@ wss.on('connection', (ws) => {
         state.stats.battery.x.shift();
       }
       line.setData([state.stats.health, state.stats.wifi, state.stats.battery]);
-      return; /*
-      randomizeStats();
-      let date = new Date();
-      let stats = [];
-      for (let kind of chartVals) {
-        let stat = state.stats[kind];
-        stat.x.push(state[kind]);
-        stat.y.push(date.toTimeString().split(' ')[0]);
-        if (stat.x.length > CHART_HISTORY) {
-          stat.x.shift();
-        }
-        if (stat.y.length > CHART_HISTORY) {
-          stat.y.shift();
-        }
-        stats.push(stat);
-      }
-      line.setData(stats);
-      screen.render(); */
+      ipc.server.broadcast('sync', JSON.stringify(state));
+      return;
     }
 
     function randomizeStats() {
@@ -253,18 +246,11 @@ wss.on('connection', (ws) => {
       let [prefix, amt] = data.split(':');
       // console.log(prefix, amt);
 
-      if (prefix && amt !== undefined) {
+      if (prefix in state && amt !== undefined) {
         prefix = prefix.trim();
         state[prefix] = parseFloat(amt);
-        /*if (state.battery < 1) {
-          terminalClosed = true;
-          terminal.destroy();
-          screen.append(batteryNotice);
-        } else if (terminalClosed && state.battery > 1) {
-          terminal = make_terminal();
-          terminalClosed = false;
-          batteryNotice.detach();
-        }*/
+      } else if (prefix == 'learnSpell') {
+        ipc.server.broadcast('learnSpell', amt)
       }
     });
 
