@@ -92,7 +92,7 @@ ipc.connectTo('dash', function() {
     });
 
     function checkWifi(spellEmit, callback) {
-      if (state.wifi >= 10 * Math.random()) {
+      if (state.wifi >= 10 * Math.random() || Math.random() > 0.3) {
         loading_bar('sending', SPELL_WAIT * Math.random(), () => {
           spellEmit();
           return callback();
@@ -160,6 +160,8 @@ ipc.connectTo('dash', function() {
           return callback();
         });
 
+    let learntSpells = {};
+
     let learnSpell = {
       water: () => addSpell('water', 'make things wet (voids warranty)'),
       fireball: () => addSpell('fireball', 'fire emoji fire emoji fire emoji'),
@@ -168,7 +170,7 @@ ipc.connectTo('dash', function() {
       waterspray: () => addSpell(
                       'spray water', 'a fine mist appears at your fingertips'),
       jump: () => addSpell('jump', 'boing!'),
-      couch: () => addSpell('crouch', '!goinb'),
+      crouch: () => addSpell('crouch', '!goinb'),
       armor: () => vorpal.command('health armour', 'Gain 20 armour points')
                        .action(function(args, callback) {
                          this.log('Health: ' + state.health);
@@ -183,13 +185,23 @@ ipc.connectTo('dash', function() {
 
     // addSpell('lightning', 'blow them away with this powerful spell');
 
-    addSpell('radar', 'connect to your nearby friends');
+    addSpell(
+        'radar', 'connect to your nearby friends',
+        'radar has stopped due to an unexpected error');
 
     on('learnSpell', (spell) => {
+      let alreadyKnown = false;
+      if (learntSpells[spell] != undefined) {
+        vorpal.log(
+            'updating ' + spell + ' to latest version v' + Math.random() + '.' +
+            Math.random());
+        alreadyKnown = true;
+      }
       if (spell in learnSpell) {
         vorpal.log('downloading ' + spell);
         loading_bar('downloading', 4000 + 2000 * Math.random(), () => {
-          learnSpell[spell]();
+          if (!alreadyKnown) learnSpell[spell]();
+          learntSpells[spell] = true;
           vorpal.log(
               spell + ' spell downloaded!\n\ttype: help ' + spell +
               ' for usage instructions and help');
@@ -197,6 +209,15 @@ ipc.connectTo('dash', function() {
         })
       }
     })
+
+    vorpal
+        .command(
+            '__learnSpell <spell>',
+            function(args, callback) {
+              learnSpell[args.spell]();
+              learntSpells[spell] = true;
+            })
+        .hidden();
 
     vorpal.command('spell', 'Equip the spell').action(function(args, callback) {
       this.log('i\'m sorry, i don\'t understand what you mean');
