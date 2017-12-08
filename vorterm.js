@@ -255,18 +255,6 @@ ipc.connectTo('dash', function() {
           return callback();
         });
 
-    vorpal.command('camera', 'Take a photo with the front camera')
-        .action(function(args, callback) {
-          emit('photo', 'front');
-          return callback();
-        });
-
-    vorpal.command('camera back', 'Takes a photo with the rear camera')
-        .action(function(args, callback) {
-          emit('photo', 'rear');
-          return callback();
-        });
-
     addSpell('scan', 'QR-code scanner');
 
     vorpal.delimiter('cir > ').show();
