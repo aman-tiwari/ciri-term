@@ -143,7 +143,8 @@ wss.on('connection', (ws) => {
       showLegend: true,
       border: 'line',
       wholeNumbersOnly: false,  // true=do not show fraction in y axis
-      label: 'Stats'
+      label: 'Stats',
+      screen: screen
     });
 
     var bar_h = contrib.bar({
@@ -157,7 +158,9 @@ wss.on('connection', (ws) => {
       barSpacing: 6,
       xOffset: 0,
       maxHeight: 80,
-      barBgColor: 'red'
+      barBgColor: 'red',
+      screen: screen
+      
     });
 
 
@@ -172,7 +175,9 @@ wss.on('connection', (ws) => {
       barSpacing: 6,
       xOffset: 0,
       maxHeight: 80,
-      barBgColor: 'blue'
+      barBgColor: 'blue',
+      screen: screen
+      
     });
 
 
@@ -187,7 +192,9 @@ wss.on('connection', (ws) => {
       barSpacing: 6,
       xOffset: 0,
       maxHeight: 80,
-      barBgColor: 'green'
+      barBgColor: 'green',
+      screen: screen
+      
     });
 
 
@@ -275,7 +282,8 @@ wss.on('connection', (ws) => {
         width: '70%',
         height: '70%',
         border: 'line',
-        style: {fg: 'default', bg: 'default', focus: {border: {fg: 'green'}}}
+        style: {fg: 'default', bg: 'default', focus: {border: {fg: 'green'}}},
+        screen: screen
       });
 
       return term;
