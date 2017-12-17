@@ -99,8 +99,6 @@ wss.on('connection', (ws) => {
       ipc.server.emit(sock, 'ack');
     })
 
-
-
     ipc.server.on('camera', (kind, socket) => {
       if (kind.data == 'front') {
         ws.send('photo:frontCamera');
@@ -143,29 +141,68 @@ wss.on('connection', (ws) => {
       height: '30%',
       xPadding: 2,
       showLegend: true,
+      border: 'line',
       wholeNumbersOnly: false,  // true=do not show fraction in y axis
       label: 'Stats'
     });
 
-    var series1 = {
-      title: 'apples',
-      x: ['t1', 't2', 't3', 't4'],
-      y: [5, 1, 7, 5],
-      style: {line: 'yellow', text: 'green', baseline: 'black'},
-    };
+    var bar_h = contrib.bar({
+      label: 'Health (%)',
+      width: '10%',
+      height: '70%',
+      border: 'line',
+      left: '70%',
+      top: '30%',
+      barWidth: 4,
+      barSpacing: 6,
+      xOffset: 0,
+      maxHeight: 80,
+      barBgColor: 'red'
+    });
 
-    var series2 = {
-      title: 'oranges',
-      x: ['t1', 't2', 't3', 't4'],
-      y: [2, 1, 4, 8],
-      style: {line: 'red', text: 'green', baseline: 'black'},
-    };
+
+    var bar_w = contrib.bar({
+      label: 'Health (%)',
+      width: '10%',
+      height: '70%',
+      border: 'line',
+      left: '80%',
+      top: '30%',
+      barWidth: 4,
+      barSpacing: 6,
+      xOffset: 0,
+      maxHeight: 80,
+      barBgColor: 'blue'
+    });
+
+
+    var bar_b = contrib.bar({
+      label: 'Battery (%)',
+      width: '10%',
+      height: '70%',
+      border: 'line',
+      left: '90%',
+      top: '30%',
+      barWidth: 4,
+      barSpacing: 6,
+      xOffset: 0,
+      maxHeight: 80,
+      barBgColor: 'green'
+    });
+
 
     screen.append(line);
+    screen.append(bar_h);
+    screen.append(bar_w);
+    screen.append(bar_b);
+
     // must append before setting data
     line.setData([state.stats.health, state.stats.wifi, state.stats.battery]);
-
-    function updateChart() {
+    bar_h.setData({titles: ['health'], data: [state.health]});
+    bar_w.setData({titles: ['wifi'], data: [state.wifi]});
+    bar_b.setData({titles: ['battery'], data: [state.battery]});
+    /*
+    for (let i = 0; i < 400; i++) {
       let t = new Date().toTimeString().split(' ')[0];
       state.stats.health.y.push(state.health);
       state.stats.health.x.push(t);
@@ -173,7 +210,7 @@ wss.on('connection', (ws) => {
       state.stats.wifi.x.push(t);
       state.stats.battery.y.push(state.battery);
       state.stats.battery.x.push(t);
-      if (state.stats.health.y.length > 100) {
+      if (state.stats.health.y.length > 400) {
         state.stats.health.y.shift();
         state.stats.health.x.shift();
         state.stats.wifi.y.shift();
@@ -182,6 +219,31 @@ wss.on('connection', (ws) => {
         state.stats.battery.x.shift();
       }
       line.setData([state.stats.health, state.stats.wifi, state.stats.battery]);
+      bar_h.setData({titles: ['health'], data: [state.health]});
+      bar_w.setData({titles: ['wifi'], data: [state.wifi]});
+      bar_b.setData({titles: ['battery'], data: [state.battery]});
+    }
+*/
+    function updateChart() {
+      let t = new Date().toTimeString().split(' ')[0];
+      state.stats.health.y.push(state.health);
+      state.stats.health.x.push(t);
+      state.stats.wifi.y.push(state.wifi);
+      state.stats.wifi.x.push(t);
+      state.stats.battery.y.push(state.battery);
+      state.stats.battery.x.push(t);
+      if (state.stats.health.y.length > 400) {
+        state.stats.health.y.shift();
+        state.stats.health.x.shift();
+        state.stats.wifi.y.shift();
+        state.stats.wifi.x.shift();
+        state.stats.battery.y.shift();
+        state.stats.battery.x.shift();
+      }
+      line.setData([state.stats.health, state.stats.wifi, state.stats.battery]);
+      bar_h.setData({titles: ['health'], data: [state.health]});
+      bar_w.setData({titles: ['wifi'], data: [state.wifi]});
+      bar_b.setData({titles: ['battery'], data: [state.battery]});
       ipc.server.broadcast('sync', JSON.stringify(state));
       return;
     }
@@ -196,7 +258,7 @@ wss.on('connection', (ws) => {
 
     // for (let i = 0; i < 100; i++) updateChart();
 
-    let chart_update = setInterval(updateChart, 1000);
+    let chart_update = setInterval(updateChart, 300);
     // chart_update.unref();
 
     function make_terminal() {
@@ -210,7 +272,7 @@ wss.on('connection', (ws) => {
         top: '30%',
         shell: '/bin/bash',
         env: process.env,
-        width: '100%',
+        width: '70%',
         height: '70%',
         border: 'line',
         style: {fg: 'default', bg: 'default', focus: {border: {fg: 'green'}}}

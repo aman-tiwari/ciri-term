@@ -110,13 +110,14 @@ ipc.connectTo('dash', function() {
     function addSpell(spell, desc, log) {
       desc = desc || 'Equip ' + spell;
       log = log || '--> turning on ' + spell;
-      vorpal.command(spell, desc)
-          .action(function(args, callback) {
-            this.log(log);
-            return checkWifi(() => emit(spell), () => callback());
-          })
-          .alias('spell ' + spell);
+      let v = vorpal.command(spell, desc)
+                  .action(function(args, callback) {
+                    this.log(log);
+                    return checkWifi(() => emit(spell), () => callback());
+                  })
+                  .alias('spell ' + spell);
       emit('learn', spell);
+      return v;
     };
 
     vorpal.command('health', 'Show info about your health')
@@ -125,12 +126,6 @@ ipc.connectTo('dash', function() {
           return callback();
         });
 
-
-    vorpal.command('health heal', 'Heal 20 hp')
-        .action(function(args, callback) {
-          this.log('Health: ' + state.health);
-          return callback();
-        });
 
     let enemy_info = {
       cable_snake:
@@ -163,9 +158,16 @@ ipc.connectTo('dash', function() {
     let learntSpells = {};
 
     let learnSpell = {
+      heal: () => addSpell('health heal', 'Heal 20 HP'),
+      armour: () => addSpell('health armour', 'Get 20 armour'),
+      fists:
+          () => addSpell(
+              'fists',
+              'New workout improves hand strength by 100 with one simple trick'),
       water: () => addSpell('water', 'make things wet (voids warranty)'),
-      fireball: () => addSpell('fireball', 'fire emoji fire emoji fire emoji'),
-      mine: () => addSpell('mine', ''),
+      fireball: () => addSpell(
+                    'fireball', 'turn up the heat with this holiday favourite'),
+      landmine: () => addSpell('landmine', 'open for a surprise'),
       firespray: () => addSpell('spray fire', 'warranty voided upon usage'),
       waterspray: () => addSpell(
                       'spray water', 'a fine mist appears at your fingertips'),
@@ -181,8 +183,10 @@ ipc.connectTo('dash', function() {
                           this.log('Health: ' + state.health);
                           return callback();
                         })
-    }
+    };
 
+    learnSpell.fists();
+    learnSpell.heal();
     // addSpell('lightning', 'blow them away with this powerful spell');
 
     addSpell(
@@ -210,6 +214,8 @@ ipc.connectTo('dash', function() {
       }
     })
 
+    addSpell('attack', 'use the current spell').alias('atk').alias('a');
+
     vorpal
         .command(
             '__learnSpell <spell>',
@@ -224,13 +230,23 @@ ipc.connectTo('dash', function() {
       return callback();
     });
 
+    vorpal.catch('catch-all').action(function(args, callback) {
+      this.log('i\'m sorry, i don\'t understand what you mean');
+      return callback();
+    });
+
     ipc.of.dash.on('ack', () => {});
 
+    let flashlightOn = false;
     // informational commands that are always there
     vorpal.command('flashlight', 'Turns on flashlight')
         .action(function(args, callback) {
-          this.log('--> turning on flashlight');
+          this.log(
+              '--> turning ' + flashlightOn ? 'on' :
+                                              'off' +
+                      ' flashlight');
           emit('flashlight');
+          flashlightOn = true;
           callback();
         });
 
@@ -241,13 +257,6 @@ ipc.connectTo('dash', function() {
           // emit('inventory');
           return callback();
         });
-
-
-    vorpal
-        .command(
-            'fists',
-            'New workout improves hand strength by 100 with one simple trick')
-        .action(function(args, callback) { this.log('punchy time'); });
 
     vorpal.command('spells', ' Lists spells in my memory')
         .action(function(args, callback) {
