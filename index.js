@@ -304,7 +304,7 @@ wss.on('connection', (ws) => {
 
     terminal = make_terminal();
 
-    terminal.pty.write('cd ' + process.cwd() + ' && node vorterm.js\n');
+    terminal.pty.write('cd ' + __dirname + ' && ' + __dirname + '/node vorterm.js\n');
 
 
     let batteryNotice = battery_dead();
